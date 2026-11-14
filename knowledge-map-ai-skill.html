@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Skill · 知识地图</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif; background:#F6F4EE; color:#2B332F; line-height:1.6; padding:24px 16px 48px; }
+  .wrap { max-width:960px; margin:0 auto; }
+  .hero { background:#1F5C4D; color:#fff; border-radius:20px; padding:28px 28px 24px; box-shadow:0 6px 24px rgba(31,92,77,.18); }
+  .hero h1 { font-size:26px; letter-spacing:1px; }
+  .hero p { margin-top:8px; font-size:14px; opacity:.85; }
+  .sec-label { display:flex; align-items:center; gap:10px; margin:32px 4px 8px; font-size:17px; font-weight:700; color:#1F5C4D; }
+  .sec-label::after { content:""; flex:1; height:1px; background:#D8D3C6; }
+  .sec-note { font-size:13px; color:#7A7568; margin:0 6px 16px; }
+  .grid-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:900px){ .grid-cards{ grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:640px){ .grid-cards{ grid-template-columns:1fr;} }
+  .card { display:block; text-decoration:none; color:inherit; background:#fff; border-radius:16px; padding:18px 18px 16px; border:1px solid #EDE9DF; box-shadow:0 3px 12px rgba(60,60,40,.07); transition:transform .2s ease, box-shadow .2s ease; position:relative; }
+  .card:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(60,60,40,.12); }
+  .card .num { display:inline-block; width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; background:#1F5C4D; color:#fff; font-size:14px; font-weight:700; }
+  .card h3 { font-size:17px; margin:10px 0 6px; color:#1F5C4D; }
+  .card .gist { font-size:13px; color:#6B675C; margin-bottom:12px; min-height:40px; }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { font-size:11.5px; background:#EEF4F0; color:#2F6B57; border:1px solid #D8E7DE; border-radius:999px; padding:3px 10px; }
+  .card .hint { position:absolute; top:16px; right:16px; font-size:11.5px; color:#8FA89C; cursor:pointer; }
+  .card .hint::after { content:"展开 ▾"; }
+  .card:hover .hint::after { color:#2F6B57; }
+  .card .hint::before { content:"点不开？下载后可正常打开"; position:absolute; top:20px; right:0; width:128px; background:#2B332F; color:#fff; font-size:11px; line-height:1.5; padding:6px 10px; border-radius:8px; box-shadow:0 4px 14px rgba(0,0,0,.18); opacity:0; pointer-events:none; transition:opacity .15s ease; z-index:5; }
+  .tipcheck { display:none; }
+  .tipcheck:checked ~ .hint::before { opacity:1; }
+  .loop { margin-top:14px; font-size:12.5px; color:#7A7568; background:#FBFAF6; border:1px dashed #C9C2B2; border-radius:12px; padding:10px 14px; }
+  .modal { position:fixed; inset:0; background:rgba(31,41,37,.45); display:none; align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal:target, .modal.open { display:flex; }
+  .modal .veil { position:absolute; inset:0; cursor:default; }
+  .modal .box { position:relative; z-index:1; background:#fff; border-radius:18px; max-width:560px; width:100%; max-height:80vh; overflow:auto; padding:24px 26px 20px; box-shadow:0 12px 40px rgba(0,0,0,.18); animation:pop .18s ease; }
+  @keyframes pop { from { opacity:0; transform:translateY(8px) scale(.98);} to { opacity:1; transform:none;} }
+  .modal .close { position:absolute; top:12px; right:16px; text-decoration:none; color:#8A8578; font-size:24px; line-height:1; }
+  .modal .close:hover { color:#1F5C4D; }
+  .modal .mnum { display:inline-block; width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%;; background:#1F5C4D; color:#fff; font-size:14px; font-weight:700; }
+  .modal h3 { display:inline; font-size:18px; color:#1F5C4D; margin-left:8px; }
+  .modal .mg { font-size:12.5px; color:#8A8578; margin:8px 0 14px; }
+  .modal li { font-size:13.5px; color:#57534A; margin-left:20px; margin-bottom:10px; }
+  .modal li b { color:#2F6B57; }
+  .branch .card { background:#FDFCF9; }
+  .branch .num { background:#8FA89C; }
+  .branch h3 { color:#4E6B5E; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } }
+  .panel { background:#fff; border-radius:16px; padding:16px; box-shadow:0 3px 12px rgba(60,60,40,.06); border:1px solid #EDE9DF; }
+  .panel h4 { font-size:14px; color:#1F5C4D; margin-bottom:8px; }
+  .panel li { font-size:12.5px; color:#57534A; margin-left:18px; margin-bottom:6px; }
+  .path { background:#2F6B57; color:#fff; border-radius:16px; padding:16px 20px; margin-top:32px; font-size:14px; }
+  .path b { color:#CDE7D9; }
+  .book { background:#fff; border:1px solid #EDE9DF; border-radius:14px; padding:14px 16px; margin-bottom:10px; font-size:13px; }
+  .book b { color:#1F5C4D; }
+  .book a { color:#2F6B57; word-break:break-all; }
+  .book .why { color:#6B675C; margin-top:4px; }
+  .verify { display:inline-block; font-size:11px; background:#EEF4F0; color:#2F6B57; border-radius:999px; padding:2px 8px; margin-left:6px; }
+  .verify.pending { background:#FBF3E4; color:#9A7B2D; }
+  .quest { border-left:4px solid #1F5C4D; padding:16px 18px; }
+  .quest .q-essence { font-size:14px; font-weight:600; color:#2B332F; margin-bottom:10px; }
+  .quest li { font-size:13px; color:#57534A; margin-left:18px; margin-bottom:8px; }
+  .quest li b { color:#1F5C4D; }
+  .quest .q-map { margin-top:10px; font-size:12.5px; color:#8A8578; }
+  .foot { margin-top:24px; font-size:12px; color:#8A8578; }
+  .foot li { margin-left:18px; margin-bottom:4px; }
+  .brand { margin-top:32px; text-align:center; font-size:12px; color:#B3AC9C; letter-spacing:3px; }
+  html, body { overflow-x:hidden; }
+  img, table { max-width:100%; }
+  @media (max-width:640px){
+    body { padding:16px 12px 36px; }
+    .hero { padding:22px 20px 20px; border-radius:16px; }
+    .hero h1 { font-size:21px; }
+    .hero p { font-size:12.5px; }
+    .sec-label { font-size:15.5px; margin:24px 2px 6px; }
+    .sec-note { font-size:12.5px; margin:0 4px 12px; }
+    .card { padding:16px 16px 14px; border-radius:14px; }
+    .card .gist { min-height:0; margin-bottom:10px; }
+    .card .hint::before { width:116px; font-size:10.5px; }
+    .quest, .panel { padding:14px 16px; border-radius:14px; }
+    .modal { padding:12px; }
+    .modal .box { padding:20px 18px 16px; border-radius:16px; max-height:84vh; }
+    .path { padding:14px 16px; font-size:13px; margin-top:24px; border-radius:14px; }
+    .book { padding:12px 14px; }
+    .foot { font-size:11.5px; }
+    .brand { margin-top:24px; letter-spacing:2px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>AI Skill · 知识地图</h1>
+    <p>用途：系统了解领域全景 · 基于Anthropic官方工程文档等3个权威来源检索的初稿 · 2026-11-13</p>
+  </div>
+
+  <div class="sec-label">这个领域在解决什么问题</div>
+  <div class="panel quest">
+    <p class="q-essence">通用大模型什么都会一点但没有一样是专家级——Skill解决的就是"如何让AI在特定领域稳定地达到专家水准"，把人的流程性知识打包成AI可复用的资产。</p>
+    <ul>
+      <li><b>知识怎么装进AI</b>：模型权重是死的、上下文是活的，Skill走的是上下文这条路——不训练模型，靠"说明书+工具"注入专长</li>
+      <li><b>装了怎么按需取用</b>：装100个专长不能每次全塞给AI，需要"平时只看目录、用到才翻正文"的机制</li>
+      <li><b>装错了怎么办</b>：指令也是攻击面，别人写的Skill可能让AI干坏事，需要一套安全审计意识</li>
+    </ul>
+    <p class="q-map">模块①②回答"Skill是什么、怎么运转"，模块③④回答"怎么设计好、怎么管起来"，⑤解决"边界和邻居"。</p>
+  </div>
+
+  <div class="sec-label">先学这些 · 从"是什么"到"怎么运转"再到"怎么设计"</div>
+  <div class="sec-note">切分理由：①是地基——不知道Skill是什么，后面全白学；②的渐进披露是整个领域最核心的运转机制，不懂它就理解不了SKILL.md为什么那样写；③④是在会看懂的基础上动手做和管理。不学①②直接看③，等于没学过语法就开始写作文。</div>
+
+  <div class="grid-cards">
+    <a class="card" href="#m1">
+      <input class="tipcheck" id="tip1" type="checkbox">
+      <label class="hint" for="tip1"></label>
+      <span class="num">1</span>
+      <h3>基本概念与边界</h3>
+      <div class="gist">先搞清楚Skill到底是个啥，和Prompt、Agent、MCP这些邻居怎么分地盘</div>
+      <div class="tags"><span class="tag">SKILL.md</span><span class="tag">上下文注入</span><span class="tag">开放标准</span></div>
+    </a>
+    <a class="card" href="#m2">
+      <input class="tipcheck" id="tip2" type="checkbox">
+      <label class="hint" for="tip2"></label>
+      <span class="num">2</span>
+      <h3>运转机制</h3>
+      <div class="gist">Skill是怎么被AI发现、加载、执行的——核心是渐进披露三层结构</div>
+      <div class="tags"><span class="tag">渐进披露</span><span class="tag">metadata触发</span><span class="tag">脚本工具</span></div>
+    </a>
+    <a class="card" href="#m3">
+      <input class="tipcheck" id="tip3" type="checkbox">
+      <label class="hint" for="tip3"></label>
+      <span class="num">3</span>
+      <h3>设计方法与写作</h3>
+      <div class="gist">怎么把一个领域专家的Know-how写成AI能执行好的说明书</div>
+      <div class="tags"><span class="tag">评测先行</span><span class="tag">结构化拆分</span><span class="tag">name/description</span></div>
+    </a>
+    <a class="card" href="#m4">
+      <input class="tipcheck" id="tip4" type="checkbox">
+      <label class="hint" for="tip4"></label>
+      <span class="num">4</span>
+      <h3>评测与迭代</h3>
+      <div class="gist">Skill写完不等于写对——怎么科学地判断它好不好、怎么越改越好</div>
+      <div class="tags"><span class="tag">Evals</span><span class="tag">观察轨迹</span><span class="tag">AI自评</span></div>
+    </a>
+    <a class="card" href="#m5">
+      <input class="tipcheck" id="tip5" type="checkbox">
+      <label class="hint" for="tip5"></label>
+      <span class="num">5</span>
+      <h3>分发、管理与生态</h3>
+      <div class="gist">一个skill怎么从个人草稿变成组织资产，再到跨平台流通</div>
+      <div class="tags"><span class="tag">SkillHub</span><span class="tag">版本治理</span><span class="tag">开源标准</span></div>
+    </a>
+  </div>
+  <div class="loop">五块是个闭环：③设计 → ④评测 → 用真实场景暴露问题 → 回到③迭代；②的运转机制约束着③能怎么写（写法必须服务加载机制）；⑤的分发又以③④的质量为基础。所以动手做的人常在③④之间来回，而不是一次走完。</div>
+
+  <div class="sec-label">有空再学 · 可以后置的专项</div>
+  <div class="sec-note">后置理由：这些都不影响你写出第一个能用的Skill，属于"做熟了再深化"的专项；等你要做企业级skill资产或多平台分发时再回头补。</div>
+
+  <div class="grid-cards branch">
+    <div class="card">
+      <span class="num">6</span>
+      <h3>安全与信任</h3>
+      <div class="gist">装别人的Skill前先审计：指令和脚本都是攻击面</div>
+      <div class="tags"><span class="tag">来源审计</span><span class="tag">提示注入</span></div>
+    </div>
+    <div class="card">
+      <span class="num">7</span>
+      <h3>Skill × MCP 组合</h3>
+      <div class="gist">Skill教AI怎么做事，MCP给它外接系统——两者怎么搭配干活</div>
+      <div class="tags"><span class="tag">MCP</span><span class="tag">工作流编排</span></div>
+    </div>
+    <div class="card">
+      <span class="num">8</span>
+      <h3>前沿：AI自建Skill</h3>
+      <div class="gist">让AI把自己的成功经验自动固化成新Skill——领域的远期方向</div>
+      <div class="tags"><span class="tag">自进化</span><span class="tag">Claude自写</span></div>
+    </div>
+  </div>
+
+  <div class="sec-label">来龙去脉</div>
+  <div class="sec-note">地图之外，再补三块背景：它怎么演变来的、现在有哪些玩法、做得好不好怎么判断。</div>
+  <div class="grid2">
+    <div class="panel">
+      <h4>纵向看演进：这个领域怎么走到今天</h4>
+      <ul>
+        <li><b>2020-2023 提示词工程</b>：靠手工写Prompt挤模型能力，知识散落在聊天记录和Playground里，不可复用不可分享——这是Skill要解决的前身问题</li>
+        <li><b>2023-2025 Agent化</b>：模型接入工具执行和文件系统（如Claude Code），能动手干活的通用Agent出现——"光有通用能力不够，需要领域专长"的问题随之浮现</li>
+        <li><b>2025-10 Anthropic发布Agent Skills</b>：SKILL.md格式确立，官方定义为"指令+脚本+资源的文件夹"；2025年底发布为开放标准（agentskills.io），OpenClaw、Claude Code等多平台采纳</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h4>横向看流派：当下几条路线</h4>
+      <ul>
+        <li><b>Anthropic原教旨路线</b>：SKILL.md + 渐进披露，强调简洁格式、把复杂度外置给文件系统——行业主流，本文地图主干即按此切</li>
+        <li><b>平台生态路线</b>：各Agent平台自带skill市场/编排层（如企业内部Skill市场、Claude插件市场），在标准之上加管理、埋点、评分等工程层</li>
+        <li><b>自进化路线</b>：让Agent自己写、自己改Skill（如skill-creator类skill），人只做验收——目前是前沿探索， Anthropic官方也预告此方向</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+      <h4 style="margin-top:12px">这个领域怎么研究和实践</h4>
+      <ul>
+        <li>研究范式：不是理论学科，是工程实践领域——靠评测驱动（用代表性任务集跑分）+ 用量观察（token成本、触发准确率）积累经验，官方最佳实践来自一线工程博客而非论文</li>
+        <li>干活方式：写说明书式写作 + 让AI当第一读者（写完让AI自评哪里会误解、哪里缺信息），创作者和AI协同调试</li>
+      </ul>
+      <h4 style="margin-top:12px">评价标准：怎么判断一个Skill好不好</h4>
+      <ul>
+        <li>触发准确：相关任务准确激活、不相关任务不误触发（官方：name和description是触发关键）</li>
+        <li>任务达成：装载该Skill后，代表性任务的成功率、稳定性和token成本是否改善</li>
+      </ul>
+  </div>
+
+  <div class="path">
+    🧭 <b>入门路径</b>：先啃①基本概念（知道SKILL.md长什么样）→ ②渐进披露（理解为什么这样写）→ ③设计方法 → ④评测迭代；③④可以并行；⑤和分支里的安全、MCP组合等专项暂缓，等你管理多个skill时再回头补。最快的一步是：拿一个你每天重复教的AI流程，按③的方法写成一个SKILL.md，用④的方式迭代它。
+  </div>
+
+  <div class="sec-label">推荐书单 · 用这些资料的目录核对这张地图</div>
+  <div class="book">
+    <b>Anthropic官方工程博客《Equipping agents with Agent Skills》（含"The anatomy of a skill"）</b><span class="verify">已查证</span>
+    <div class="why">领域定义的第一手来源：Skill的解剖结构、渐进披露三层、官方开发与评测指南都在这里，一张图对应本地图①②③④</div>
+    <a href="https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills">https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills</a>
+  </div>
+  <div class="book">
+    <b>Claude Code官方文档《Extend Claude with skills》</b><span class="verify">已查证</span>
+    <div class="why">最完整的操作手册：skill的存放位置、frontmatter规范、调用控制、子agent执行——学完能自己动手建第一个skill，对应③⑤</div>
+    <a href="https://code.claude.com/docs/en/skills">https://code.claude.com/docs/en/skills</a>
+  </div>
+  <div class="book">
+    <b>Agent Skills开放标准（agentskills.io）</b><span class="verify">已查证</span>
+    <div class="why">跨平台的格式规范原文，理解"为什么这个格式能通用"——对应①和⑤</div>
+    <a href="https://agentskills.io">https://agentskills.io</a>
+  </div>
+
+  <div class="foot">
+    <p><b>这张地图管什么</b>：覆盖"AI Skill作为上下文注入式专长封装"这一技术领域的全景（概念/机制/设计/评测/生态）；不覆盖模型微调与训练、MCP协议细节、Agent通用架构——那是相邻领域，这张图只划了边界。</p>
+    <p style="margin-top:8px"><b>信息源</b>（简版，全list见对话文字版）：</p>
+    <ul>
+      <li>Anthropic Engineering Blog: Equipping agents with Agent Skills（2025-12，官方第一手）</li>
+      <li>Claude Code 官方文档 docs: Extend Claude with skills（code.claude.com/docs/en/skills）</li>
+      <li>Agent Skills 开放标准 agentskills.io（Anthropic官方转引确认存在）</li>
+    </ul>
+  </div>
+
+  <div class="brand">团团 ❤ 学习</div>
+
+</div>
+
+<div class="modal" id="m1"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">1</span><h3>基本概念与边界</h3>
+  <div class="mg">先搞清楚Skill到底是个啥，和Prompt、Agent、MCP这些邻居怎么分地盘</div>
+  <ul>
+    <li><b>Agent Skill</b>：一个装着"指令+脚本+资源"的文件夹，核心是一个带YAML元数据的SKILL.md说明书——把某领域的流程性知识打包，让通用AI在该领域达到专家水准</li>
+    <li><b>上下文注入 vs 模型训练</b>：给AI加专长只有两条路——改权重（训练，贵且慢）或改上下文（注入知识，便宜灵活）。Skill走第二条路，官方的比喻是"给新员工的入职手册"</li>
+    <li><b>与Prompt的关系</b>：提示词工程的手工版、一次性、不可分享；Skill是它的工程化——可安装、可发现、可复用。Custom Commands已被合并进Skills，是同一件事的新说法</li>
+    <li><b>与MCP的关系</b>：MCP解决"AI怎么连接外部系统"（给工具），Skill解决"AI怎么用好这些工具做事"（教方法）。官方定位是互补而非替代</li>
+    <li><b>开放标准</b>：2025年底Anthropic把Skill格式发布为开放标准（agentskills.io），同一份skill可在多个AI工具间移植——这是"领域"成立的关键标志</li>
+  </ul>
+</div></div>
+
+<div class="modal" id="m2"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">2</span><h3>运转机制</h3>
+  <div class="mg">Skill是怎么被AI发现、加载、执行的——核心是渐进披露三层结构</div>
+  <ul>
+    <li><b>渐进披露（Progressive Disclosure）</b>：整个领域最核心的机制。三层：启动时只把所有skill的name+description装进系统提示（元数据层）→ 判断相关时才读入完整SKILL.md（正文层）→ 需要时再按需读附属文件（扩展层）。像一本先给目录、再翻章节、最后查附录的手册</li>
+    <li><b>metadata触发</b>：AI决定"要不要用这个skill"靠的就是frontmatter里的name和description两个字段——这是为什么官方反复强调触发词要写进description（你自己的knowledge-map skill里"不得绕过"那段就是触发性写作的实例）</li>
+    <li><b>上下文经济学</b>：SKILL.md正文只在用到时占上下文，长参考材料几乎零成本待命。理论上一个skill可捆绑的上下文量无上限——这是它比塞Prompt强的根本原因</li>
+    <li><b>脚本工具化</b>：skill可捆绑脚本（Python/Bash等）让AI在需要时直接执行——AI不需要读入脚本源码和原始数据，靠确定性代码得到可复现结果，省token又稳</li>
+    <li><b>双向调用</b>：既可AI自动判断触发，也可用户用/skill-name显式调用——写skill时要决定哪种方式（frontmatter可控）</li>
+  </ul>
+</div></div>
+
+<div class="modal" id="m3"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">3</span><h3>设计方法与写作</h3>
+  <div class="mg">怎么把一个领域专家的Know-how写成AI能执行好的说明书</div>
+  <ul>
+    <li><b>评测先行（Start with evaluation）</b>：官方第一条最佳实践——先跑代表性任务看AI在哪卡壳、缺什么信息，再针对缺口写skill。不是"我觉得AI需要什么"而是"跑出来它缺什么"</li>
+    <li><b>为规模而结构化（Structure for scale）</b>：SKILL.md臃肿了就拆成多个文件按需引用；互斥/少用的内容分路径存放；明确告诉AI某文件是"读作参考"还是"直接执行"</li>
+    <li><b>触发词写作</b>：name和description是AI决定调用的唯一依据——把"什么时候必须用我"写成明确的用户语言清单（你翻任何一个成熟skill的description都能看到这套模式）</li>
+    <li><b>和AI共创</b>：让Claude把成功路径和踩过的坑记录回skill里，观察它实际怎么用、在哪跑偏——skill是"调试出来的"，不是一次写成的</li>
+    <li><b>工程层模式</b>：平台实践中发展出的模式——硬门槛（先问清再执行）、显性交互（输出前先确认）、兜底规则（宁可复述确认也不绕过）——你团队skill里的"兜底规则（最高优先级）"就是这类设计的活例子</li>
+  </ul>
+</div></div>
+
+<div class="modal" id="m4"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">4</span><h3>评测与迭代</h3>
+  <div class="mg">Skill写完不等于写对——怎么科学地判断它好不好、怎么越改越好</div>
+  <ul>
+    <li><b>Evals评测集</b>：准备一批代表性任务当"考卷"，改动前后各跑一遍对比——判断skill好坏靠数据不靠感觉。官方建议从评测开始，也以评测收尾</li>
+    <li><b>轨迹观察</b>：监控AI装了skill后的实际行为路径——有没有意外走偏、有没有过度依赖某些上下文、该触发时触发了吗</li>
+    <li><b>成本指标</b>：token消耗、触发准确率（该触发的触发了吗/不该触发的误触了吗）——skill好坏一半看任务成功率，一半看它"安静时的开销"</li>
+    <li><b>AI自评</b>：写完让AI当第一读者，自检哪里会误解、哪里信息不足——你团队元学习skill的"AI输出确定度标注"就是评测意识产品化的例子</li>
+    <li><b>真实使用回灌</b>：训练营/群聊的真实用户数据回写分析（你们6月训练营那次221条数据比对就是实例），发现问题→定位是skill问题还是数据问题→迭代</li>
+  </ul>
+</div></div>
+
+<div class="modal" id="m5"><a class="veil" href="#"></a><div class="box"><a class="close" href="#">×</a>
+  <span class="mnum">5</span><h3>分发、管理与生态</h3>
+  <div class="mg">一个skill怎么从个人草稿变成组织资产，再到跨平台流通</div>
+  <ul>
+    <li><b>SkillHub/市场模式</b>：平台级分发（如企业内部Skill市场），带安装量、评分、版本管理——skill从"个人工具"变成"可流通资产"，单个skill上线首日即被大量下载就是生态分发的实例</li>
+    <li><b>组织资产化</b>：企业把内部流程批量固化成skill库——官方也强调Skills帮助"组织共享context和工作流"，这是培训人做skill的独特价值位</li>
+    <li><b>版本治理</b>：metadata里的version/creator、更新记录、上下架流程——skill多了以后比写skill更费心的事</li>
+    <li><b>跨平台移植</b>：开放标准让同一skill在Claude/Claude Code/其他Agent工具通用，"写一次到处装"正在成为现实</li>
+  </ul>
+</div></div>
+
+<script>
+document.addEventListener('click', function(e){
+  var a = e.target.closest('a.card');
+  if (a) { e.preventDefault(); var m = document.querySelector(a.getAttribute('href')); if (m) m.classList.add('open'); return; }
+  var c = e.target.closest('.modal .close, .modal .veil');
+  if (c) { e.preventDefault(); c.closest('.modal').classList.remove('open'); }
+});
+</script></body>
+</html>
