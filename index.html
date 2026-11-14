@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>把你的拿手活做成AI Skill · 宇茜</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --sub: #555;
+    --accent: #FFC300;
+    --accent-deep: #e6a800;
+    --bg: #faf9f6;
+    --card: #ffffff;
+    --line: #e8e5df;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif; color: var(--ink); }
+
+  .deck { position: relative; height: 100%; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column; justify-content: center;
+    padding: 5vh 7vw;
+    background: var(--bg);
+  }
+  .slide.active { display: flex; animation: fade .45s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  .kicker { font-size: 1.5vh; letter-spacing: .35em; color: var(--accent-deep); font-weight: 700; margin-bottom: 1.8vh; text-transform: uppercase; }
+  h1 { font-size: 6.8vh; line-height: 1.25; font-weight: 800; }
+  h2 { font-size: 4.6vh; line-height: 1.3; font-weight: 800; margin-bottom: 2.4vh; }
+  .sub { font-size: 2.3vh; color: var(--sub); margin-bottom: 2.8vh; line-height: 1.6; }
+  .big { font-size: 3.6vh; line-height: 1.55; font-weight: 600; }
+  .muted { color: var(--sub); font-size: 2.2vh; line-height: 1.7; font-weight: 400; }
+  .hl { background: linear-gradient(transparent 62%, var(--accent) 62%); padding: 0 .1em; }
+  .num { font-size: 11vh; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+  .num small { font-size: 3vh; font-weight: 600; color: var(--sub); margin-left: .6vh; letter-spacing: 0; }
+
+  .row { display: flex; gap: 2.4vw; align-items: stretch; margin: 2vh 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 1.8vh; padding: 2.4vh 1.8vw; flex: 1; }
+  .card .t { font-size: 2.4vh; font-weight: 700; margin-bottom: 1vh; }
+  .card .d { font-size: 1.95vh; color: var(--sub); line-height: 1.6; }
+
+  .quote { border-left: .7vh solid var(--accent); padding: 1.4vh 1.8vw; margin-top: 2.4vh; font-size: 2.8vh; font-weight: 600; line-height: 1.6; background: #fffdf3; border-radius: 0 1.4vh 1.4vh 0; }
+
+  ul.list { list-style: none; }
+  ul.list li { font-size: 2.6vh; line-height: 1.5; font-weight: 500; padding: 1.2vh 0 1.2vh 3.2vh; position: relative; border-bottom: 1px solid var(--line); }
+  ul.list li:last-child { border-bottom: none; }
+  ul.list li::before { content: ''; position: absolute; left: .4vh; top: 2.2vh; width: 1.1vh; height: 1.1vh; border-radius: 50%; background: var(--accent); }
+  ul.list .dim { color: var(--sub); font-weight: 400; font-size: 2.1vh; }
+
+  .tag { display: inline-block; background: var(--accent); border-radius: 10vh; padding: .5vh 1.6vh; font-size: 1.9vh; font-weight: 700; margin-bottom: 1.8vh; }
+
+  .hud { position: fixed; bottom: 2.2vh; right: 3vw; z-index: 10; font-size: 1.6vh; color: #b5b0a4; font-weight: 600; letter-spacing: .1em; }
+  .dots { position: fixed; bottom: 2.4vh; left: 50%; transform: translateX(-50%); display: flex; gap: 1vh; z-index: 10; }
+  .dots span { width: .8vh; height: .8vh; border-radius: 50%; background: #d8d4c8; cursor: pointer; }
+  .dots span.on { background: var(--accent-deep); }
+  .footer-name { position: absolute; bottom: 4.4vh; left: 7vw; font-size: 1.9vh; color: #b5b0a4; font-weight: 600; letter-spacing: .2em; }
+
+  /* 流程竖排 */
+  .flow { display: flex; flex-direction: column; gap: 1.2vh; }
+  .fstep { display: flex; gap: 1.3vw; align-items: flex-start; }
+  .fstep .n { flex: none; width: 4vh; height: 4vh; border-radius: 50%; background: var(--accent); color: #1a1a1a; font-weight: 800; font-size: 2vh; display: flex; align-items: center; justify-content: center; margin-top: .2vh; }
+  .fstep .body { flex: 1; border-bottom: 1px solid var(--line); padding-bottom: 1.1vh; }
+  .fstep .t { font-size: 2.4vh; font-weight: 700; }
+  .fstep .d { font-size: 1.9vh; color: var(--sub); margin-top: .3vh; line-height: 1.5; }
+  .flow-split { display: flex; gap: 2.4vw; align-items: stretch; }
+  .flow-split .flow { flex: 1.15; }
+
+  /* 对话还原卡 */
+  .chat { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 1.6vh; padding: 1.8vh 1.4vw; display: flex; flex-direction: column; gap: 1.1vh; box-shadow: 0 1vh 3vh rgba(0,0,0,.05); }
+  .chat .who { font-size: 1.7vh; color: #999; font-weight: 700; letter-spacing: .08em; }
+  .bub { max-width: 94%; border-radius: 1.3vh; padding: 1.1vh 1.1vw; font-size: 1.85vh; line-height: 1.55; }
+  .bub-r { align-self: flex-end; background: #ffe98a; border-bottom-right-radius: .4vh; font-weight: 600; }
+  .bub-l { align-self: flex-start; background: #f4f4f1; border-bottom-left-radius: .4vh; color: #333; }
+  .bub .lbl { font-size: 1.4vh; color: #888; font-weight: 700; margin-bottom: .4vh; }
+  .chat-note { font-size: 1.6vh; color: #999; text-align: center; margin-top: .3vh; }
+  .round { font-size: 1.5vh; color: #bbb; font-weight: 800; letter-spacing: .2em; text-align: center; margin: .2vh 0; }
+
+  /* 横向步骤链 */
+  .pipe { display: flex; gap: .8vw; align-items: stretch; margin: 2.2vh 0; }
+  .pstep { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 1.4vh; padding: 1.5vh .9vw; text-align: center; position: relative; }
+  .pstep.hot { border: 2px solid var(--accent); background: #fffdf3; }
+  .pstep .pn { font-size: 1.7vh; font-weight: 800; color: var(--accent-deep); }
+  .pstep .pt { font-size: 2.1vh; font-weight: 700; margin: .4vh 0; }
+  .pstep .pd { font-size: 1.6vh; color: var(--sub); line-height: 1.45; }
+  .parr { align-self: center; color: var(--accent-deep); font-size: 2.6vh; font-weight: 800; flex: none; }
+
+  /* 四路径卡 */
+  .routes { display: flex; gap: 1.2vw; }
+  .route { flex: 1; background: #fff; border: 1px solid var(--line); border-top: .7vh solid #888; border-radius: 1.4vh; padding: 1.6vh 1.1vw; }
+  .route.c1 { border-top-color: #4a90d9; } .route.c2 { border-top-color: #52a68a; }
+  .route.c3 { border-top-color: #9b7ed9; } .route.c4 { border-top-color: #d97a6a; }
+  .route .rt { font-size: 2.3vh; font-weight: 800; margin-bottom: .5vh; }
+  .route .rw { font-size: 1.6vh; color: var(--accent-deep); font-weight: 700; margin-bottom: .8vh; }
+  .route ol { padding-left: 1.6vh; }
+  .route ol li { font-size: 1.6vh; color: #444; line-height: 1.5; margin-bottom: .4vh; }
+
+  /* 知识层 */
+  .layer { background: #fff; border: 1px solid var(--line); border-radius: 1.4vh; padding: 1.5vh 1.3vw; margin-bottom: 1.1vh; }
+  .layer .lt { font-size: 2.1vh; font-weight: 700; }
+  .layer .lt .lv { color: var(--accent-deep); }
+  .layer .ld { font-size: 1.7vh; color: var(--sub); line-height: 1.55; margin-top: .3vh; }
+  .kpi { display: flex; gap: 1.2vw; margin: 1.4vh 0; }
+  .kpi .k { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 1.2vh; padding: 1.2vh 1vw; text-align: center; }
+  .kpi .kn { font-size: 3.2vh; font-weight: 800; }
+  .kpi .kd { font-size: 1.6vh; color: var(--sub); }
+
+  /* 二维码页 */
+  .qr-wrap { display: flex; gap: 4vw; align-items: center; }
+  .qr-wrap img { width: 32vh; height: 32vh; background: #fff; border-radius: 1.8vh; border: 1px solid var(--line); }
+
+  /* 产出物 iframe */
+  .frame-box { width: 100%; height: 62vh; border: 1px solid var(--line); border-radius: 1.6vh; overflow: hidden; background: #fff; }
+  .frame-box iframe { width: 100%; height: 100%; border: none; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  
+  
+  <!-- 1 四个补充点 -->
+  <section class="slide">
+    <style>
+      .four { display: flex; flex-direction: column; gap: 2.2vh; margin-top: 1vh; }
+      .four .it { display: flex; align-items: center; gap: 2vw; background: #fff; border: 1px solid var(--line); border-radius: 2vh; padding: 2.6vh 2.4vw; box-shadow: 0 .6vh 2.4vh rgba(0,0,0,.04); }
+      .four .no { flex: none; width: 6.4vh; height: 6.4vh; border-radius: 50%; background: var(--accent); color: #1a1a1a; font-size: 3vh; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+      .four .tx { font-size: 3.5vh; font-weight: 700; line-height: 1.4; }
+    </style>
+    <div class="kicker">第一部分 · 接着东霖的内容补四点</div>
+    <h2 style="font-size:5.4vh">四点补充</h2>
+    <div class="four">
+      <div class="it"><div class="no">一</div><div class="tx">Skill 不是<span class="hl">越多越好</span></div></div>
+      <div class="it"><div class="no">二</div><div class="tx">用的时候，选 Prompt 还是 <span class="hl">Skill</span>？</div></div>
+      <div class="it"><div class="no">三</div><div class="tx">做的时候，按什么<span class="hl">颗粒度</span>拆？</div></div>
+      <div class="it"><div class="no">四</div><div class="tx">好的 Skill 是<span class="hl">磨</span>出来的</div></div>
+    </div>
+  </section>
+
+<!-- 3 案例1·搭建过程 -->
+  <section class="slide">
+    <div class="tag">案例一 · 沟通 skill 的搭建过程</div>
+    <h2>从一份架构文档，到真实环境发布</h2>
+    <div class="flow-split">
+      <div class="flow">
+        <div class="fstep"><div class="n">1</div><div class="body"><div class="t">写架构文档</div><div class="d">链路：触发 → 意图识别 → 四路径 → 数据回写</div></div></div>
+        <div class="fstep"><div class="n">2</div><div class="body"><div class="t">发给虾：按架构搭建 skill</div><div class="d">架构文档不是给自己看的，是给 AI 的施工图</div></div></div>
+        <div class="fstep"><div class="n">3</div><div class="body"><div class="t">本地 agent 上测试</div><div class="d">跑通链路、修触发词和规则（V1.0）</div></div></div>
+        <div class="fstep"><div class="n">4</div><div class="body"><div class="t">找用户测试、收反馈</div><div class="d">13 人内测 + 二轮测试 + QA（V2.0）</div></div></div>
+        <div class="fstep"><div class="n">5</div><div class="body"><div class="t">真实环境大批量发布</div><div class="d">训练营群，真实学员触发使用</div></div></div>
+      </div>
+      <div class="chat">
+        <div class="who">真实对话还原 · 两轮</div>
+        <div class="round">— 第①步 · 交需求 —</div>
+        <div class="bub bub-r">我要开发一个沟通基本功的 skill，请根据我的方案完成新范式链路设计：触发机制、分析逻辑、知识库结构、推送规则</div>
+        <div class="bub bub-l"><div class="lbl">虾 · 已处理</div>文档已完整读取，输出新范式链路架构设计：整体架构概览（架构图）……</div>
+        <div class="round">— 第②步 · 交施工图 —</div>
+        <div class="bub bub-r">基于这份 skill 架构设计文档，帮我封装成 skill</div>
+        <div class="bub bub-l"><div class="lbl">虾 · 已处理</div>好的，按架构文档封装：SKILL.md（触发条件＋意图路由）＋知识库文件……</div>
+        <div class="chat-note">一轮出架构，一轮出 skill —— 文档就是施工图</div>
+      </div>
+    </div>
+  </section>
+
+  
+  
+  
+  <!-- 4 链路+四路径 -->
+  <section class="slide">
+    <style>
+      .mini-pipe { display: flex; gap: .7vw; align-items: stretch; margin-bottom: 5.5vh; }
+      .mini-pipe .ms { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 1.3vh; padding: 1.4vh .7vw; text-align: center; box-shadow: 0 .5vh 1.8vh rgba(0,0,0,.04); }
+      .mini-pipe .ms.hot { border: 1.8px solid var(--accent); background: #fffdf3; }
+      .mini-pipe .mt { font-size: 2.2vh; font-weight: 700; }
+      .mini-pipe .md { font-size: 1.55vh; color: var(--sub); line-height: 1.4; margin-top: .2vh; }
+      .mini-pipe .ar { align-self: center; color: var(--accent-deep); font-weight: 800; font-size: 2.1vh; }
+      .routes .route { padding: 2vh 1.2vw; }
+      .routes .rt { font-size: 2.8vh; }
+      .routes .rw { font-size: 1.8vh; margin-bottom: 1.1vh; }
+      .routes ol li { font-size: 1.85vh; line-height: 1.55; margin-bottom: .6vh; }
+    </style>
+    <div class="kicker">案例一 · 架构设计</div>
+    <h2>整条链路 × 四条路径</h2>
+    <div class="sub">从一句话进去，到能力画像持续更新——闭环六步走完，第四步按意图分发</div>
+    <div class="mini-pipe">
+      <div class="ms"><div class="mt">① 输入</div><div class="md">主动求助 / 被动推送</div></div><div class="ar">→</div>
+      <div class="ms"><div class="mt">② 意图识别</div><div class="md">关键词 × 语境两层过滤</div></div><div class="ar">→</div>
+      <div class="ms"><div class="mt">③ 诊断画像</div><div class="md">首次冷启动 / 调取历史</div></div><div class="ar">→</div>
+      <div class="ms hot"><div class="mt">④ 路径决策</div><div class="md">四条路径分发 ↓</div></div><div class="ar">→</div>
+      <div class="ms"><div class="mt">⑤ 数据回写</div><div class="md">对话即数据，静默更新</div></div><div class="ar">→</div>
+      <div class="ms"><div class="mt">⑥ 推送优化</div><div class="md">推荐持续变准 ↻</div></div>
+    </div>
+    <div class="routes">
+      <div class="route c1"><div class="rt">🛠 想用</div><div class="rw">「帮我写」「怎么说」</div>
+        <ol><li>先给话术（正式版+轻松版）</li><li>顺便植 1 个知识点，不说教</li><li>问「下次你会怎么开口？」</li><li>后台静默记录能力表现</li></ol></div>
+      <div class="route c2"><div class="rt">📖 想学</div><div class="rw">「为什么」「我想学」</div>
+        <ol><li>按水位推内容（L1-L4）</li><li>多角度碰撞，跟你辩一辩</li><li>费曼复述：讲得清才算懂</li></ol></div>
+      <div class="route c3"><div class="rt">🎭 想练</div><div class="rw">「陪我练」「模拟一下」</div>
+        <ol><li>采集背景：对方是谁、卡在哪</li><li>角色扮演多轮演练</li><li>复盘打分：亮点/改进/推荐话术</li><li>练习数据存档</li></ol></div>
+      <div class="route c4"><div class="rt">🧪 想测</div><div class="rw">「测测我」「分析我」</div>
+        <ol><li>冷启动：20题，10分钟出画像</li><li>速测：3题30秒定位单场景</li><li>五维水位 L1-L4＋学习路径</li></ol></div>
+    </div>
+  </section>
+
+<!-- 5 知识翻译 -->
+  <section class="slide">
+    <div class="kicker">案例一 · 架构设计 ②</div>
+    <h2>18 讲课 → AI 的弹药库</h2>
+    <div class="sub">搭 Skill 不是创作，是翻译：把成熟课程拆成 AI 随手能查的结构化资产</div>
+    <div class="kpi">
+      <div class="k"><div class="kn">18 个</div><div class="kd">沟通场景</div></div>
+      <div class="k"><div class="kn">18 张</div><div class="kd">知识卡片</div></div>
+      <div class="k"><div class="kn">54 道</div><div class="kd">情境判断题</div></div>
+      <div class="k"><div class="kn">5 维</div><div class="kd">能力模型 × 权重映射</div></div>
+    </div>
+    <div class="row" style="margin:1.2vh 0 0">
+      <div style="flex:1.1">
+        <div class="layer"><div class="lt"><span class="lv">L1</span>｜元能力框架层</div><div class="ld">五维能力模型、场景×维度映射、每讲权重——静态底座，不直接推送</div></div>
+        <div class="layer"><div class="lt"><span class="lv">L2</span>｜方法论知识层</div><div class="ld">每讲一张标准卡片：痛点/方法/话术/反面案例。AI 不「背」课，<b>按表查询</b></div></div>
+        <div class="layer"><div class="lt"><span class="lv">L3</span>｜练习题库层</div><div class="ld">情境判断题＋陪练题，按 L1-L4 水位分级难度</div></div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="t">知识卡片 · 同步汇报 <span style="font-size:1.5vh;color:var(--accent-deep)">主评：信息传递 40%</span></div>
+        <div class="d"><b>痛点</b>：汇报变流水账，上级反复追问<br><b>方法</b>：结论先行三步法——想清楚→说清楚→接得住<br><b>反面案例</b>：先铺 3 分钟背景，上级问「所以结论是什么？」<br><b>话术</b>：「我来汇报〔主题〕的进展，〔结论〕。主要有三点……需要关注的是〔风险〕，我的建议是〔下一步〕。」<br><br>每张卡片还带：常见错误、分级练习题、关联场景与视频课链接——<b>AI 拿到就能教</b></div>
+      </div>
+    </div>
+  </section>
+
+<!-- 8 案例2 -->
+  <section class="slide">
+    <div class="tag">案例二 · 快速了解新领域 skill</div>
+    <h2>同一套方法，走得更快</h2>
+    <div class="flow-split">
+      <div class="flow">
+        <div class="fstep"><div class="n">1</div><div class="body"><div class="t">架构设计文档</div><div class="d">从元学习方法论取"拆"做入口，V1.7 起步</div></div></div>
+        <div class="fstep"><div class="n">2</div><div class="body"><div class="t">发给虾，按文档搭建 skill</div><div class="d">同一条路：文档是施工图</div></div></div>
+        <div class="fstep"><div class="n">3</div><div class="body"><div class="t">测试与优化</div><div class="d">一路迭代到 V11 才准出上线</div></div></div>
+        <div class="fstep"><div class="n">4</div><div class="body"><div class="t">体验官内测 + 问卷</div><div class="d">两批内测，上线后 65 份问卷调研</div></div></div>
+        <div class="fstep"><div class="n">5</div><div class="body"><div class="t">上线传播验证</div><div class="d">一次团队传播 327 次下载、97% 满意</div></div></div>
+      </div>
+      <div class="chat">
+        <div class="who">真实对话还原 · 第④步：用户测试反馈</div>
+        <div class="bub bub-r">今天上午找了几个人帮忙测试，反馈几点：1、"先修主干""全景补盲"这些词太学术，要换 2、知识地图的 HTML 有没有更好的视觉互动？3、能不能关联公司内部知识库？</div>
+        <div class="bub bub-l"><div class="lbl">虾 · 已处理 2 分 13 秒</div>三个问题，第 3 个已经替你验证完了，逐个答：① 换词选项（每组给推荐＋备选）……</div>
+        <div class="chat-note">用户反馈 → 虾出方案 → 人来定——这就是"磨"的样子</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 扫码体验 -->
+  <section class="slide">
+    <div class="kicker">现在就试试</div>
+    <div class="qr-wrap">
+      <img src="data:image/png;base64,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" alt="knowledge-map 二维码">
+      <div>
+        <h2 style="margin-bottom:1.6vh">扫码体验【快速了解新领域 skill】</h2>
+        <div class="big" style="font-size:3vh">高手学新东西，第一步不是开始学，<br>而是<span class="hl">先画地图</span></div>
+        <div class="muted" style="margin:1.6vh 0 2vh;font-size:2.1vh">进入新领域时，它会先查证权威资料，帮你画出这个领域的整体地图——<br>由哪几个模块组成、彼此什么关系、先学什么后学什么，<br>再附一张可点开的知识地图和对口书单帮你校准</div>
+        <div class="muted" style="font-size:1.9vh">试试说：快速了解 XX ｜ 帮我拆解 XX 领域 ｜ 画一张 XX 的知识地图 ｜ 刚接触 XX 该从哪入手</div>
+        <div class="muted" style="margin-top:1.8vh;font-size:1.8vh;color:var(--accent-deep);font-weight:700">GitHub 开源：317576075-cloud / knowledge-map</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 产出物展示 -->
+  <section class="slide">
+    <div class="kicker">产出物长这样 · 以「了解 skill」为例</div>
+    <h2>一张可点开的知识地图</h2>
+    <div class="frame-box"><iframe src="knowledge-map-ai-skill.html"></iframe></div>
+    <div class="muted" style="margin-top:1.2vh;font-size:1.8vh">现场可直接滚动、点开节点演示（真实产出物）</div>
+  </section>
+
+  <!-- 11 收尾 -->
+  <section class="slide">
+    <div class="kicker">今晚带走</div>
+    <h2>一张地图 · 一条路 · 一句话</h2>
+    <ul class="list">
+      <li><b>一张地图</b>：需求诊断 → 项目设计 → 经验萃取 → 课程开发 → 在岗陪练 → 效果复盘
+        <div class="dim">先跑通一个高频场景，再连接下一个</div></li>
+      <li><b>一条路</b>：今晚选一件重复做的工作，让 AI 真实做一遍；做错了纠正它，明天打包成 skill</li>
+      <li><b>一句话</b>：<span class="hl">Skill 真正节省的不是这一次的十分钟，是以后每一次都不用从头再来</span></li>
+    </ul>
+    <div class="muted" style="margin-top:2.4vh;font-size:2.4vh;font-weight:600">我讲的是架构先行——稳，但有门槛；你们的第一个 skill，大概率走东霖老师的路：<span class="hl" style="font-weight:800">行动先行，直接开干</span>。掌声交给东霖老师 👏</div>
+  </section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<div class="hud" id="hud"></div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const dotsBox = document.getElementById('dots');
+  let cur = 0;
+  slides.forEach((_, i) => {
+    const d = document.createElement('span');
+    d.onclick = () => go(i);
+    dotsBox.appendChild(d);
+  });
+  const dots = [...dotsBox.children];
+  function go(i) {
+    if (i < 0 || i >= slides.length) return;
+    slides[cur].classList.remove('active');
+    dots[cur].classList.remove('on');
+    cur = i;
+    slides[cur].classList.add('active');
+    dots[cur].classList.add('on');
+    document.getElementById('hud').textContent = (cur + 1) + ' / ' + slides.length;
+  }
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+    if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'f' || e.key === 'F') { document.documentElement.requestFullscreen?.(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.dots')) return;
+    go(cur + 1);
+  });
+  go(0);
+</script>
+</body>
+</html>
